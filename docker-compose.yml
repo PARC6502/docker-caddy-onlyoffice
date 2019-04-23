@@ -1,0 +1,46 @@
+version: "3"
+services:
+  documents:
+    container_name: onlyoffice-documents
+    image: onlyoffice/documentserver:latest
+    stdin_open: true
+    tty: true
+    restart: always
+    networks:
+      - onlyoffice
+    expose:
+      - "80"
+    volumes:
+      - document_data:/var/www/onlyoffice/Data
+      - document_log:/var/log/onlyoffice
+      - document_db:/var/lib/postgresql
+
+  caddy:
+    container_name: onlyoffice-caddy
+    image: abiosoft/caddy:no-stats
+    stdin_open: true
+    tty: true
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - onlyoffice
+    environment:
+      - CADDYPATH=/certs
+      - ACME_AGREE=true
+      # CHANGE THESE OR THE CONTAINER WILL FAIL TO RUN
+      - CADDY_LETSENCRYPT_EMAIL=certificates@example.com
+      - CADDY_EXTERNAL_DOMAIN=mydomain.com
+    volumes:
+      - ./data/letsencrypt:/certs:rw
+      - ./Caddyfile:/etc/Caddyfile:ro
+
+networks:
+  onlyoffice:
+    driver: "bridge"
+
+volumes:
+  document_data:
+  document_log:
+  document_db:
